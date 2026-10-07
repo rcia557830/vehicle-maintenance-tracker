@@ -1,0 +1,19 @@
+{
+    "name":  "Motorcare - Vehicle Maintenance Tracker",
+    "short_name":  "Motorcare",
+    "start_url":  ".",
+    "display":  "standalone",
+    "background_color":  "#f0f4f9",
+    "theme_color":  "#101f36",
+    "description":  "Your cloud garage, maintenance history, tire care, and expenses.",
+    "orientation":  "portrait-primary",
+    "prefer_related_applications":  false,
+    "icons":  [
+                  {
+                      "src":  "icons/motorcare.svg",
+                      "sizes":  "any",
+                      "type":  "image/svg+xml",
+                      "purpose":  "any"
+                  }
+              ]
+}
