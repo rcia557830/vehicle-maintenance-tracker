@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/maintenance_schedule.dart';
 import '../theme/app_theme.dart';
 import 'workspace.dart';
+import 'feedback.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -19,7 +20,7 @@ class EmptyState extends StatelessWidget {
   final String? label;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -31,7 +32,14 @@ class EmptyState extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.muted, height: 1.6),
+          ),
+        ),
         if (action != null) ...[
           const SizedBox(height: 20),
           FilledButton(onPressed: action, child: Text(label!)),
@@ -80,33 +88,20 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ServiceStatus.upcoming => ('Upcoming', Colors.teal),
-      ServiceStatus.dueSoon => ('Due soon', Colors.orange.shade900),
-      ServiceStatus.overdue => ('Overdue', Colors.red.shade800),
-      ServiceStatus.completed => ('Completed', Colors.blueGrey),
+      ServiceStatus.upcoming => ('Upcoming', AppColors.info),
+      ServiceStatus.dueSoon => ('Due soon', AppColors.warning),
+      ServiceStatus.overdue => ('Overdue', AppColors.danger),
+      ServiceStatus.completed => ('Completed', AppColors.success),
     };
-    return Chip(
-      avatar: Icon(
-        switch (status) {
-          ServiceStatus.completed => Icons.check_circle_outline,
-          ServiceStatus.overdue => Icons.error_outline,
-          ServiceStatus.dueSoon => Icons.schedule,
-          ServiceStatus.upcoming => Icons.event_outlined,
-        },
-        size: 15,
-        color: color,
-      ),
-      visualDensity: VisualDensity.compact,
-      label: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 11,
-        ),
-      ),
-      backgroundColor: color.withValues(alpha: .10),
-      side: BorderSide.none,
+    return StatusBadge(
+      label: label,
+      color: color,
+      icon: switch (status) {
+        ServiceStatus.completed => Icons.check_circle_outline,
+        ServiceStatus.overdue => Icons.error_outline,
+        ServiceStatus.dueSoon => Icons.schedule,
+        ServiceStatus.upcoming => Icons.event_outlined,
+      },
     );
   }
 }
@@ -147,14 +142,16 @@ Future<bool> runAction(
   try {
     await action();
     if (context.mounted && success != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(success)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(backgroundColor: AppColors.success, content: Text(success)),
+      );
     }
     return true;
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
+          backgroundColor: AppColors.danger,
           content: Text(
             'Could not save the change. Check your entries and try again.',
           ),
@@ -189,10 +186,7 @@ class SectionTitle extends StatelessWidget {
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
-                Text(
-                  subtitle!,
-                  style: const TextStyle(color: Color(0xff64756f)),
-                ),
+                Text(subtitle!, style: const TextStyle(color: AppColors.muted)),
               ],
             ],
           ),
@@ -218,10 +212,10 @@ class MetricTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: warning ? const Color(0xfffff7ed) : Colors.white,
+      color: warning ? const Color(0xfffff3f2) : Colors.white,
       borderRadius: BorderRadius.circular(18),
       border: Border.all(
-        color: warning ? const Color(0xfff4d5b7) : AppColors.line,
+        color: warning ? const Color(0xfff1c6c2) : AppColors.line,
       ),
     ),
     child: Column(
@@ -243,7 +237,7 @@ class MetricTile extends StatelessWidget {
             const SizedBox(width: 6),
             Icon(
               icon,
-              color: warning ? const Color(0xffb65c32) : AppColors.primary,
+              color: warning ? AppColors.danger : AppColors.primary,
               size: 19,
             ),
           ],

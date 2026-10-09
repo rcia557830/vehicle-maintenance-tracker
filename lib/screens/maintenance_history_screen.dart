@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../models/maintenance_schedule.dart';
+import '../theme/app_theme.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/maintenance_record.dart';
@@ -107,6 +111,7 @@ class _MaintenanceHistoryScreenState extends State<MaintenanceHistoryScreen> {
             onChanged: (value) => setState(() => query = value),
           ),
           second: DropdownButtonFormField<String>(
+            key: ValueKey(filter),
             initialValue: filter,
             isExpanded: true,
             decoration: const InputDecoration(
@@ -149,8 +154,18 @@ class _MaintenanceHistoryScreenState extends State<MaintenanceHistoryScreen> {
               message: query.isNotEmpty || filter != 'All'
                   ? 'Try a different search or service filter.'
                   : 'Your completed services will appear here.',
-              label: 'Add maintenance record',
-              action: () => openScreen(context, const AddMaintenanceScreen()),
+              label: query.isNotEmpty || filter != 'All'
+                  ? 'Clear filters'
+                  : 'Add maintenance record',
+              action: query.isNotEmpty || filter != 'All'
+                  ? () {
+                      search.clear();
+                      setState(() {
+                        query = '';
+                        filter = 'All';
+                      });
+                    }
+                  : () => openScreen(context, const AddMaintenanceScreen()),
             ),
           )
         else
@@ -176,36 +191,62 @@ class MaintenanceDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Service details')),
       body: r == null
-          ? const Center(child: Text('This record is no longer available.'))
+          ? SingleChildScrollView(
+              child: EmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: 'Record unavailable',
+                message: 'This record is no longer available.',
+                label: 'Go back',
+                action: () => Navigator.pop(context),
+              ),
+            )
           : ListView(
               padding: formPagePadding(context),
               children: [
-                Text(r.type, style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 16),
-                DashboardCard(
-                  icon: Icons.calendar_today_outlined,
-                  title: 'Service date',
-                  value: dateLabel(r.date),
+                PageHeading(
+                  r.type,
+                  subtitle:
+                      'Service record for ${p.vehicle?.nickname ?? 'your vehicle'}.',
                 ),
-                DashboardCard(
-                  icon: Icons.speed,
-                  title: 'Service odometer',
-                  value: distance(r.odometer, p.unit),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: StatusChip(ServiceStatus.completed),
                 ),
-                DashboardCard(
-                  icon: Icons.payments_outlined,
-                  title: 'Cost',
-                  value: money(r.cost),
+                const SizedBox(height: 20),
+                FieldPair(
+                  first: MetricTile(
+                    icon: Icons.payments_outlined,
+                    label: 'Cost',
+                    value: money(r.cost),
+                  ),
+                  second: MetricTile(
+                    icon: Icons.speed,
+                    label: 'Service odometer',
+                    value: distance(r.odometer, p.unit),
+                  ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Service provider / shop'),
-                  subtitle: Text(r.shop.isEmpty ? 'Not provided' : r.shop),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Notes'),
-                  subtitle: Text(r.notes.isEmpty ? 'No notes' : r.notes),
+                const SizedBox(height: 20),
+                FormSection(
+                  title: 'Service information',
+                  subtitle: 'The details of this completed service.',
+                  icon: Icons.receipt_long_outlined,
+                  children: [
+                    DetailLine(
+                      icon: Icons.calendar_today_outlined,
+                      text: 'Service date: ${dateLabel(r.date)}',
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      'Service provider / shop',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(r.shop.isEmpty ? 'Not provided' : r.shop),
+                    const SizedBox(height: 20),
+                    Text('Notes', style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 6),
+                    SelectableText(r.notes.isEmpty ? 'No notes' : r.notes),
+                  ],
                 ),
                 FilledButton.icon(
                   onPressed: () =>
@@ -214,6 +255,9 @@ class MaintenanceDetailScreen extends StatelessWidget {
                   label: const Text('Edit record'),
                 ),
                 TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
                   onPressed: () async {
                     if (await confirmDelete(context, 'maintenance record') &&
                         context.mounted) {

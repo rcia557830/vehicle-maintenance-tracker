@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../providers/maintenance_provider.dart';
 import '../widgets/common.dart';
+import '../widgets/feedback.dart';
+import '../theme/app_theme.dart';
 import '../widgets/workspace.dart';
 import '../widgets/cloud_account_panel.dart';
 import '../widgets/driver_license_panel.dart';
@@ -78,7 +80,11 @@ class SettingsScreen extends StatelessWidget {
                   if (p.notificationWarning != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: Text(p.notificationWarning!),
+                      child: InfoBanner(
+                        p.notificationWarning!,
+                        color: AppColors.warning,
+                        icon: Icons.notifications_outlined,
+                      ),
                     ),
                 ],
               ),

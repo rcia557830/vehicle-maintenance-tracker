@@ -6,6 +6,7 @@ import '../providers/maintenance_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../widgets/common.dart';
+import '../widgets/maintenance_card.dart';
 import '../widgets/workspace.dart';
 import '../widgets/driver_license_panel.dart';
 import '../widgets/vehicle_overview_card.dart';
@@ -302,26 +303,10 @@ class DashboardScreen extends StatelessWidget {
             ),
           for (final r in p.records.take(4)) ...[
             const Divider(),
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 7,
-              ),
-              leading: const IconBadge(Icons.build_outlined, size: 36),
-              title: Text(
-                r.type,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                '${dateLabel(r.date)} \u00b7 ${money(r.cost)}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              trailing: const Icon(
-                Icons.chevron_right,
-                size: 18,
-                color: AppColors.muted,
-              ),
-              onTap: () =>
+            MaintenanceCard(
+              record: r,
+              unit: p.unit,
+              onOpen: () =>
                   openScreen(context, MaintenanceDetailScreen(recordId: r.id!)),
             ),
           ],
@@ -400,6 +385,65 @@ class DashboardScreen extends StatelessWidget {
             nextPanel,
           ],
           const SizedBox(height: 20),
+          if (upcoming.length > 1) ...[
+            Panel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionTitle(
+                    'Coming up next',
+                    subtitle: 'Your service queue, ordered by priority.',
+                    action: TextButton(
+                      onPressed: () => openScreen(
+                        context,
+                        const MaintenanceScheduleScreen(),
+                      ),
+                      child: const Text('View all'),
+                    ),
+                  ),
+                  for (final service in upcoming.skip(1).take(3)) ...[
+                    const Divider(height: 24),
+                    InkWell(
+                      onTap: () => openScreen(
+                        context,
+                        const MaintenanceScheduleScreen(),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  service.type,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium,
+                                ),
+                                StatusChip(
+                                  service.status(v.odometer, unit: v.unit),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${dateLabel(service.date)} ? ${distance(service.odometer, p.unit)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
           const SectionTitle(
             'Stay road-ready',
             subtitle: 'Keep important dates and tire care in view.',

@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'widgets/feedback.dart';
+
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -116,27 +119,16 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       const TiresScreen(),
     ];
     final page = p.loading
-        ? const Center(child: CircularProgressIndicator())
+        ? const LoadingState()
         : p.error != null && index != 4
         ? Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.folder_off_outlined,
-                    size: 48,
-                    color: AppColors.muted,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(p.error!, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: p.refresh,
-                    child: const Text('Try again'),
-                  ),
-                ],
+            child: SingleChildScrollView(
+              child: EmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: 'Unable to open your garage',
+                message: p.error!,
+                label: 'Try again',
+                action: p.refresh,
               ),
             ),
           )

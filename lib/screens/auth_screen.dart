@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/workspace.dart';
+import '../widgets/feedback.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({
@@ -109,52 +110,56 @@ class _AuthScreenState extends State<AuthScreen> {
               Expanded(
                 child: Container(
                   color: AppColors.sidebar,
-                  padding: const EdgeInsets.all(64),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.directions_car_filled_rounded,
-                        color: Color(0xff52dcc4),
-                        size: 64,
-                      ),
-                      const SizedBox(height: 28),
-                      const Text(
-                        'MOTORCARE',
-                        style: TextStyle(
-                          fontSize: 13,
-                          letterSpacing: 4,
-                          color: Color(0xff52dcc4),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'A clearer view\nof every journey.',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontSize: 44, color: Colors.white),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Your garage, service history and tire replacement plans. Together, wherever you sign in.',
-                        style: TextStyle(
-                          color: Color(0xffb8c6da),
-                          fontSize: 16,
-                          height: 1.7,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      const Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                  padding: const EdgeInsets.all(40),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Chip(label: Text('Multiple vehicles')),
-                          Chip(label: Text('Tire age tracking')),
-                          Chip(label: Text('Cloud storage')),
+                          const Icon(
+                            Icons.directions_car_filled_rounded,
+                            color: Color(0xff52dcc4),
+                            size: 64,
+                          ),
+                          const SizedBox(height: 28),
+                          const Text(
+                            'MOTORCARE',
+                            style: TextStyle(
+                              fontSize: 13,
+                              letterSpacing: 4,
+                              color: Color(0xff52dcc4),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'A clearer view\nof every journey.',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(fontSize: 44, color: Colors.white),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Your garage, service history and tire replacement plans. Together, wherever you sign in.',
+                            style: TextStyle(
+                              color: Color(0xffb8c6da),
+                              fontSize: 16,
+                              height: 1.7,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          const Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              Chip(label: Text('Multiple vehicles')),
+                              Chip(label: Text('Tire age tracking')),
+                              Chip(label: Text('Cloud storage')),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -167,6 +172,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     child: AutofillGroup(
                       child: Form(
                         key: form,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -181,7 +187,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              widget.recovery ? 'Use at least 8 characters.' : 'Sign in to your personal vehicle workspace.',
+                              widget.recovery
+                                  ? 'Use at least 8 characters.'
+                                  : signup
+                                  ? 'Create an account to keep your garage, services and reminders together.'
+                                  : 'Sign in to your personal vehicle workspace.',
                               style: const TextStyle(color: AppColors.muted),
                             ),
                             const SizedBox(height: 32),
@@ -249,13 +259,14 @@ class _AuthScreenState extends State<AuthScreen> {
                             if (message != null)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: Text(
+                                child: InfoBanner(
                                   message!,
-                                  style: TextStyle(
-                                    color: failed
-                                        ? Theme.of(context).colorScheme.error
-                                        : AppColors.primary,
-                                  ),
+                                  color: failed
+                                      ? AppColors.danger
+                                      : AppColors.success,
+                                  icon: failed
+                                      ? Icons.error_outline
+                                      : Icons.check_circle_outline,
                                 ),
                               ),
                             FilledButton(

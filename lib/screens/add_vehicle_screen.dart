@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/feedback.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/vehicle.dart';
@@ -42,7 +45,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   Future<void> save() async {
-    if (!form.currentState!.validate()) return;
+    if (saving || !form.currentState!.validate()) return;
     setState(() => saving = true);
     final p = context.read<MaintenanceProvider>();
     final ok = await runAction(
@@ -70,6 +73,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
   }
 
   Widget field(int i) => TextFormField(
+    enabled: !saving,
     controller: fields[i],
     textInputAction: i == 6 ? TextInputAction.newline : TextInputAction.next,
     textCapitalization: i == 4
@@ -126,6 +130,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
     ),
     body: Form(
       key: form,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
         padding: formPagePadding(context),
         children: [
@@ -173,7 +178,7 @@ class _AddVehicleScreenState extends State<AddVehicleScreen> {
               ),
               FilledButton.icon(
                 onPressed: saving ? null : save,
-                icon: const Icon(Icons.check, size: 18),
+                icon: BusyIcon(busy: saving),
                 label: Text(saving ? 'Saving...' : 'Save vehicle'),
               ),
             ],

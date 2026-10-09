@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../database/supabase_repository.dart';
 import '../providers/maintenance_provider.dart';
 import 'workspace.dart';
+import 'feedback.dart';
+import '../theme/app_theme.dart';
 
 class CloudAccountPanel extends StatefulWidget {
   const CloudAccountPanel({super.key});
@@ -13,7 +15,7 @@ class CloudAccountPanel extends StatefulWidget {
 }
 
 class _CloudAccountPanelState extends State<CloudAccountPanel> {
-  bool busy = false;
+  bool busy = false, failed = false;
   String? message;
   Future<void> importGarage() async {
     final p = context.read<MaintenanceProvider>();
@@ -21,6 +23,7 @@ class _CloudAccountPanelState extends State<CloudAccountPanel> {
     setState(() {
       busy = true;
       message = null;
+      failed = false;
     });
     try {
       final count = await db.importLocalData();
@@ -30,10 +33,13 @@ class _CloudAccountPanelState extends State<CloudAccountPanel> {
           ? 'These local records were already imported.'
           : '$count ${count == 1 ? 'vehicle' : 'vehicles'} imported. Your local originals are unchanged.';
     } on StateError catch (e) {
+      failed = true;
       message = e.message;
     } on PostgrestException catch (e) {
+      failed = true;
       message = e.code == 'P0001' ? e.message : 'Import failed. Check your connection and database setup. Local data is unchanged.';
     } catch (_) {
+      failed = true;
       message = 'Import failed. Check your connection and try again. Local data is unchanged.';
     } finally {
       if (mounted) setState(() => busy = false);
@@ -71,7 +77,10 @@ class _CloudAccountPanelState extends State<CloudAccountPanel> {
         if (message != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
-            child: Text(message!),
+            child: InfoBanner(
+              message!,
+              color: failed ? AppColors.danger : AppColors.success,
+            ),
           ),
         const SizedBox(height: 18),
         const Divider(),
@@ -91,6 +100,7 @@ class _CloudAccountPanelState extends State<CloudAccountPanel> {
                     if (mounted) {
                       setState(() {
                         busy = false;
+                        failed = true;
                         message = 'Unable to sign out. Please try again.';
                       });
                     }

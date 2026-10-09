@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/feedback.dart';
+import '../widgets/date_picker_field.dart';
+import '../widgets/license_status.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/driver_license.dart';
@@ -17,7 +22,6 @@ class DriverLicenseScreen extends StatefulWidget {
 
 class _DriverLicenseScreenState extends State<DriverLicenseScreen> {
   final form = GlobalKey<FormState>();
-  final expiryText = TextEditingController();
   DriverLicense? original;
   DateTime? expiry;
   int validity = 5;
@@ -30,31 +34,12 @@ class _DriverLicenseScreenState extends State<DriverLicenseScreen> {
     original = context.read<MaintenanceProvider>().driverLicense;
     validity = original?.validityYears ?? 5;
     expiry = original?.expiresOn;
-    expiryText.text = expiry == null ? '' : dateLabel(expiry!);
-  }
-
-  @override
-  void dispose() {
-    expiryText.dispose();
-    super.dispose();
   }
 
   void setExpiry(DateTime date) {
     setState(() {
       expiry = date;
-      expiryText.text = dateLabel(date);
     });
-  }
-
-  Future<void> chooseExpiry() async {
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: expiry ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100, 12, 31),
-      helpText: 'EXPIRY DATE PRINTED ON YOUR LICENSE',
-    );
-    if (selected != null && mounted) setExpiry(selected);
   }
 
   Future<void> save() async {
@@ -146,17 +131,15 @@ class _DriverLicenseScreenState extends State<DriverLicenseScreen> {
                                   setState(() => validity = values.single),
                       ),
                       const SizedBox(height: 20),
-                      TextFormField(
+                      DatePickerField(
                         key: const ValueKey('license-expiry'),
-                        controller: expiryText,
-                        readOnly: true,
+                        label: 'Expiry date on your license',
+                        value: expiry,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100, 12, 31),
+                        helpText: 'EXPIRY DATE PRINTED ON YOUR LICENSE',
                         enabled: !busy,
-                        onTap: chooseExpiry,
-                        decoration: const InputDecoration(
-                          labelText: 'Expiry date on your license',
-                          hintText: 'Select the printed date',
-                          suffixIcon: Icon(Icons.calendar_month_outlined),
-                        ),
+                        onChanged: setExpiry,
                         validator: (_) => expiry == null
                             ? 'Select your license expiry date.'
                             : preview!.validate(),
@@ -197,10 +180,7 @@ class _DriverLicenseScreenState extends State<DriverLicenseScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            preview.statusLabel(DateTime.now()),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
+                          LicenseStatusBadge(license: preview),
                           const SizedBox(height: 8),
                           Text(
                             dateLabel(preview.expiresOn),
@@ -219,22 +199,24 @@ class _DriverLicenseScreenState extends State<DriverLicenseScreen> {
                   ),
                   const SizedBox(height: 20),
                   if (error != null) ...[
-                    Text(
+                    InfoBanner(
                       error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      color: AppColors.danger,
+                      icon: Icons.error_outline,
                     ),
                     const SizedBox(height: 12),
                   ],
                   FilledButton.icon(
                     onPressed: busy ? null : save,
-                    icon: const Icon(Icons.check, size: 18),
+                    icon: BusyIcon(busy: busy),
                     label: Text(busy ? 'Saving...' : 'Save license'),
                   ),
                   if (original != null) ...[
                     const SizedBox(height: 10),
                     TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                      ),
                       onPressed: busy ? null : remove,
                       icon: const Icon(Icons.delete_outline),
                       label: const Text('Remove license tracking'),

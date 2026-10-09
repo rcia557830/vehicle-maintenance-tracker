@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_theme.dart';
+import 'add_maintenance_screen.dart';
+import 'add_vehicle_screen.dart';
+
 import 'package:provider/provider.dart';
 
 import '../providers/maintenance_provider.dart';
@@ -54,6 +59,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           subtitle: p.vehicle == null
               ? 'Record services to track their costs.'
               : 'Maintenance expenses for ${p.vehicle!.nickname}, in Philippine pesos.',
+          actions: [
+            FilledButton.icon(
+              onPressed: () => openScreen(
+                context,
+                p.vehicle == null
+                    ? const AddVehicleScreen()
+                    : const AddMaintenanceScreen(),
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(p.vehicle == null ? 'Add vehicle' : 'Record expense'),
+            ),
+          ],
         ),
         ResponsiveTiles(
           children: [
@@ -135,8 +152,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             child: LinearProgressIndicator(
                               value: total == 0 ? 0 : category.value / total,
                               minHeight: 8,
-                              backgroundColor: const Color(0xffedf4f0),
-                              color: const Color(0xff278976),
+                              backgroundColor: AppColors.tint,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -160,6 +177,19 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             message: p.records.isEmpty
                 ? 'Add a maintenance record and its cost to start tracking your spending.'
                 : 'Choose another period to see your recorded costs.',
+            label: p.vehicle == null
+                ? 'Add vehicle'
+                : p.records.isEmpty
+                ? 'Record expense'
+                : 'Show all expenses',
+            action: p.records.isNotEmpty
+                ? () => setState(() => period = 'All time')
+                : () => openScreen(
+                    context,
+                    p.vehicle == null
+                        ? const AddVehicleScreen()
+                        : const AddMaintenanceScreen(),
+                  ),
           ),
         if (records.isNotEmpty)
           RecordList(

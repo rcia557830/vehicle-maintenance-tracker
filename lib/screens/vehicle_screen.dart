@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/vehicle_card.dart';
+import '../models/maintenance_schedule.dart';
+
 import 'package:provider/provider.dart';
 
 import '../providers/maintenance_provider.dart';
@@ -102,125 +106,27 @@ class VehicleScreen extends StatelessWidget {
                   for (final v in p.vehicles)
                     SizedBox(
                       width: (size.maxWidth - (columns - 1) * 16) / columns,
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: v.id == selected.id
-                                ? const Color(0xff16756a)
-                                : const Color(0xffe2eae7),
-                            width: v.id == selected.id ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const CircleAvatar(
-                                    backgroundColor: Color(0xffe4f3ed),
-                                    child: Icon(
-                                      Icons.directions_car_outlined,
-                                      color: Color(0xff16756a),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  if (v.id == selected.id)
-                                    const Chip(
-                                      label: Text('Selected'),
-                                      avatar: Icon(
-                                        Icons.check_circle,
-                                        size: 16,
-                                      ),
-                                      side: BorderSide.none,
-                                      backgroundColor: Color(0xffe4f3ed),
-                                    ),
-                                  IconButton(
-                                    tooltip: 'Edit ${v.nickname}',
-                                    onPressed: () => openScreen(
-                                      context,
-                                      AddVehicleScreen(vehicle: v),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ],
+                      child: VehicleCard(
+                        vehicle: v,
+                        selected: v.id == selected.id,
+                        spent: p.costFor(v.id!),
+                        attentionCount: p.attentionFor(v),
+                        overdueCount: p.allSchedules
+                            .where(
+                              (s) =>
+                                  s.vehicleId == v.id &&
+                                  s.status(v.odometer, unit: v.unit) ==
+                                      ServiceStatus.overdue,
+                            )
+                            .length,
+                        onEdit: () =>
+                            openScreen(context, AddVehicleScreen(vehicle: v)),
+                        onSelect: p.switching || v.id == selected.id
+                            ? null
+                            : () => runAction(
+                                context,
+                                () => p.selectVehicle(v.id!),
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                v.nickname,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              Text(
-                                '${v.year} ${v.make} ${v.model}',
-                                style: const TextStyle(
-                                  color: Color(0xff64756f),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                v.plateNumber,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              const Divider(height: 28),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      distance(v.odometer, v.unit),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(money(p.costFor(v.id!))),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                p.attentionFor(v) > 0
-                                    ? '${p.attentionFor(v)} services need attention'
-                                    : 'No services due soon',
-                                style: TextStyle(
-                                  color: p.attentionFor(v) > 0
-                                      ? const Color(0xffb65c32)
-                                      : const Color(0xff16756a),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  key: ValueKey('select-vehicle-${v.id}'),
-                                  onPressed: p.switching || v.id == selected.id
-                                      ? null
-                                      : () => runAction(
-                                          context,
-                                          () => p.selectVehicle(v.id!),
-                                        ),
-                                  icon: Icon(
-                                    v.id == selected.id
-                                        ? Icons.check
-                                        : Icons.swap_horiz,
-                                  ),
-                                  label: Text(
-                                    v.id == selected.id
-                                        ? 'Currently selected'
-                                        : 'Select vehicle',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                     ),
                 ],

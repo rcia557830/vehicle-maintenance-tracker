@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/feedback.dart';
+import 'add_vehicle_screen.dart';
+
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -15,9 +19,9 @@ String tireStatusLabel(TireAgeStatus status) => switch (status) {
   TireAgeStatus.replacementDue => 'Replacement target reached',
 };
 Color tireStatusColor(TireAgeStatus status) => switch (status) {
-  TireAgeStatus.tracking => AppColors.primary,
-  TireAgeStatus.inspect || TireAgeStatus.dueSoon => const Color(0xffa3600b),
-  TireAgeStatus.replacementDue => const Color(0xffbd3a45),
+  TireAgeStatus.tracking => AppColors.success,
+  TireAgeStatus.inspect || TireAgeStatus.dueSoon => AppColors.warning,
+  TireAgeStatus.replacementDue => AppColors.danger,
 };
 
 class TiresScreen extends StatelessWidget {
@@ -31,12 +35,15 @@ class TiresScreen extends StatelessWidget {
     final now = DateTime.now();
     final next = tires.firstOrNull;
     final content = p.vehicle == null
-        ? const Center(
+        ? SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: EmptyState(
               icon: Icons.tire_repair,
               title: 'Choose a vehicle first',
               message:
                   'Add a vehicle in your garage to start tracking its tires.',
+              label: 'Add vehicle',
+              action: () => openScreen(context, const AddVehicleScreen()),
             ),
           )
         : RefreshIndicator(
@@ -368,13 +375,10 @@ class _TireCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
-              Chip(
-                label: Text(
-                  tireStatusLabel(status),
-                  style: TextStyle(color: color),
-                ),
-                backgroundColor: color.withValues(alpha: .08),
-                side: BorderSide.none,
+              StatusBadge(
+                label: tireStatusLabel(status),
+                color: color,
+                icon: Icons.tire_repair,
               ),
             ],
           ),
@@ -674,11 +678,10 @@ class _TireFormScreenState extends State<TireFormScreen> {
                 if (error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
+                    child: InfoBanner(
                       error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      color: AppColors.danger,
+                      icon: Icons.error_outline,
                     ),
                   ),
                 Wrap(
@@ -687,7 +690,7 @@ class _TireFormScreenState extends State<TireFormScreen> {
                   children: [
                     FilledButton.icon(
                       onPressed: busy ? null : save,
-                      icon: const Icon(Icons.check, size: 18),
+                      icon: BusyIcon(busy: busy),
                       label: Text(busy ? 'Saving…' : 'Save tire'),
                     ),
                     OutlinedButton(
@@ -696,6 +699,9 @@ class _TireFormScreenState extends State<TireFormScreen> {
                     ),
                     if (widget.tire != null)
                       TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                        ),
                         onPressed: busy
                             ? null
                             : () async {

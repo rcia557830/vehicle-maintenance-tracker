@@ -185,3 +185,23 @@ class FieldPair extends StatelessWidget {
         : Column(children: [first, const SizedBox(height: 16), second]),
   );
 }
+
+class DetailLine extends StatelessWidget {
+  const DetailLine({super.key, required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppColors.muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+      ],
+    ),
+  );
+}

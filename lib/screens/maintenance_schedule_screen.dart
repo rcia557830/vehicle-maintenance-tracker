@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/feedback.dart';
+import 'add_vehicle_screen.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/maintenance_schedule.dart';
@@ -52,7 +56,7 @@ class _MaintenanceScheduleScreenState extends State<MaintenanceScheduleScreen> {
             subtitle:
                 'Plan ahead for ${p.vehicle?.nickname ?? 'your vehicle'} and track every due date.',
           ),
-          const Text(
+          const InfoBanner(
             'Due soon means within 7 days or 1,000 km (621 mi). A service is overdue when either its date or mileage is reached.',
           ),
           const SizedBox(height: 16),
@@ -70,11 +74,23 @@ class _MaintenanceScheduleScreenState extends State<MaintenanceScheduleScreen> {
           ),
           const SizedBox(height: 16),
           if (filtered.isEmpty)
-            const EmptyState(
-              icon: Icons.event_available_outlined,
-              title: 'No services in this view',
-              message:
-                  'Plan a service by date and odometer to see its status here.',
+            Panel(
+              child: EmptyState(
+                icon: Icons.event_available_outlined,
+                title: p.vehicle == null
+                    ? 'Start with your vehicle'
+                    : 'No services in this view',
+                message: p.vehicle == null
+                    ? 'Add a vehicle to plan its maintenance.'
+                    : 'Plan a service by date and odometer to see its status here.',
+                label: p.vehicle == null ? 'Add vehicle' : 'Schedule service',
+                action: () => openScreen(
+                  context,
+                  p.vehicle == null
+                      ? const AddVehicleScreen()
+                      : const AddMaintenanceScreen(isSchedule: true),
+                ),
+              ),
             ),
           for (final s in filtered)
             Card(
@@ -85,6 +101,8 @@ class _MaintenanceScheduleScreenState extends State<MaintenanceScheduleScreen> {
                   children: [
                     Row(
                       children: [
+                        const IconBadge(Icons.build_outlined, size: 36),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             s.type,
@@ -92,6 +110,7 @@ class _MaintenanceScheduleScreenState extends State<MaintenanceScheduleScreen> {
                           ),
                         ),
                         PopupMenuButton<String>(
+                          tooltip: 'Schedule options',
                           onSelected: (action) async {
                             if (action == 'edit') {
                               openScreen(
@@ -129,10 +148,18 @@ class _MaintenanceScheduleScreenState extends State<MaintenanceScheduleScreen> {
                       s.status(p.vehicle?.odometer ?? 0, unit: p.unit),
                     ),
                     const SizedBox(height: 8),
-                    Text('Due ${dateLabel(s.date)}'),
-                    Text('At ${distance(s.odometer, p.unit)}'),
-                    Text(
-                      s.reminder &&
+                    DetailLine(
+                      icon: Icons.calendar_today_outlined,
+                      text: 'Due ${dateLabel(s.date)}',
+                    ),
+                    DetailLine(
+                      icon: Icons.speed_outlined,
+                      text: 'At ${distance(s.odometer, p.unit)}',
+                    ),
+                    DetailLine(
+                      icon: Icons.notifications_outlined,
+                      text:
+                          s.reminder &&
                               p.remindersEnabled &&
                               p.notifications.supported
                           ? 'Date reminder enabled'

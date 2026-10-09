@@ -8,6 +8,12 @@ abstract final class AppColors {
   static const line = Color(0xffe4e9ef);
   static const tint = Color(0xffe0f5f1);
   static const sidebar = Color(0xff101c30);
+  // Semantic colors: use these consistently for every service and document.
+  static const success = Color(0xff187443);
+  static const warning = Color(0xff96600a);
+  static const danger = Color(0xffb42318);
+  static const info = Color(0xff365f88);
+  static const field = Color(0xfff8fafc);
 }
 
 ThemeData buildAppTheme() {
@@ -18,6 +24,11 @@ ThemeData buildAppTheme() {
       primary: AppColors.primary,
       onSurface: AppColors.ink,
       surface: Colors.white,
+      error: AppColors.danger,
+      outline: AppColors.muted,
+      outlineVariant: AppColors.line,
+      primaryContainer: AppColors.tint,
+      onPrimaryContainer: AppColors.primary,
     ),
   );
   return base.copyWith(
@@ -83,12 +94,14 @@ ThemeData buildAppTheme() {
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
+      errorMaxLines: 3,
+      helperMaxLines: 3,
       filled: true,
-      fillColor: const Color(0xfff8fafc),
+      fillColor: AppColors.field,
       labelStyle: const TextStyle(
         fontFamily: 'Roboto',
         color: AppColors.muted,
-        fontSize: 13,
+        fontSize: 14,
       ),
       hintStyle: const TextStyle(
         fontFamily: 'Roboto',
@@ -103,6 +116,14 @@ ThemeData buildAppTheme() {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
@@ -134,10 +155,11 @@ ThemeData buildAppTheme() {
     cardTheme: CardThemeData(
       color: Colors.white,
       surfaceTintColor: Colors.transparent,
-      elevation: 0,
+      elevation: 1,
+      shadowColor: const Color(0x1017283f),
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         side: const BorderSide(color: AppColors.line),
       ),
     ),
@@ -187,6 +209,54 @@ ThemeData buildAppTheme() {
     ),
     tooltipTheme: const TooltipThemeData(
       waitDuration: Duration(milliseconds: 350),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        textStyle: const TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+    ),
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      headerBackgroundColor: AppColors.tint,
+      headerForegroundColor: AppColors.ink,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    listTileTheme: const ListTileThemeData(
+      iconColor: AppColors.primary,
+      titleTextStyle: TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+      ),
+      subtitleTextStyle: TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 13,
+        height: 1.5,
+        color: AppColors.muted,
+      ),
     ),
   );
 }

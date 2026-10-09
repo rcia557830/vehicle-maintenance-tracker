@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'license_status.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/driver_license.dart';
@@ -18,12 +21,7 @@ class DriverLicensePanel extends StatelessWidget {
     final license = p.driverLicense;
     final now = DateTime.now();
     final status = license?.status(now);
-    final color = switch (status) {
-      LicenseExpiryStatus.expired => const Color(0xffb42318),
-      LicenseExpiryStatus.dueSoon ||
-      LicenseExpiryStatus.expiresToday => const Color(0xff975309),
-      _ => AppColors.primary,
-    };
+    final color = licenseStatusColor(status);
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,14 +70,7 @@ class DriverLicensePanel extends StatelessWidget {
                   dateLabel(license.expiresOn),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                Chip(
-                  label: Text(
-                    license.statusLabel(now),
-                    style: TextStyle(color: color),
-                  ),
-                  backgroundColor: color.withValues(alpha: .08),
-                  side: BorderSide.none,
-                ),
+                LicenseStatusBadge(license: license),
               ],
             ),
             const SizedBox(height: 6),

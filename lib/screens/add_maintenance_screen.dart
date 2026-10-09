@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/feedback.dart';
+import '../widgets/date_picker_field.dart';
+
 import 'package:provider/provider.dart';
 
 import '../models/maintenance_record.dart';
@@ -70,7 +74,7 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
   }
 
   Future<void> save() async {
-    if (!form.currentState!.validate()) return;
+    if (saving || !form.currentState!.validate()) return;
     final p = context.read<MaintenanceProvider>();
     if (p.vehicle == null) return;
     setState(() => saving = true);
@@ -133,15 +137,18 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
       ),
       body: Form(
         key: form,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           padding: formPagePadding(context),
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Text(
-                'For ${context.read<MaintenanceProvider>().vehicles.where((v) => v.id == vehicleId).firstOrNull?.nickname ?? 'your vehicle'}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+            PageHeading(
+              widget.isSchedule
+                  ? 'Plan ahead'
+                  : editing
+                  ? 'Update your service'
+                  : 'Record a service',
+              subtitle:
+                  'For ${context.read<MaintenanceProvider>().vehicles.where((v) => v.id == vehicleId).firstOrNull?.nickname ?? 'your vehicle'}',
             ),
             FormSection(
               title: widget.isSchedule ? 'Plan a service' : 'Service details',
@@ -157,34 +164,22 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
                   items: maintenanceTypes
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
-                  onChanged: (v) => type = v,
+                  onChanged: saving ? null : (v) => type = v,
                   validator: (v) =>
                       v == null ? 'Choose a maintenance type.' : null,
                 ),
                 const SizedBox(height: 16),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.calendar_month_outlined),
-                    title: Text(
-                      widget.isSchedule ? 'Due date' : 'Service date',
-                    ),
-                    subtitle: Text(dateLabel(date)),
-                    trailing: const Icon(Icons.edit_calendar_outlined),
-                    onTap: () async {
-                      final selected = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(1900),
-                        lastDate: widget.isSchedule
-                            ? DateTime(2100)
-                            : DateTime.now(),
-                      );
-                      if (selected != null) setState(() => date = selected);
-                    },
-                  ),
+                DatePickerField(
+                  label: widget.isSchedule ? 'Due date' : 'Service date',
+                  value: date,
+                  firstDate: DateTime(1900),
+                  lastDate: widget.isSchedule ? DateTime(2100) : DateTime.now(),
+                  enabled: !saving,
+                  onChanged: (value) => setState(() => date = value),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  enabled: !saving,
                   controller: odometer,
                   decoration: InputDecoration(
                     labelText:
@@ -205,6 +200,7 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
                 icon: Icons.receipt_long_outlined,
                 children: [
                   TextFormField(
+                    enabled: !saving,
                     controller: cost,
                     decoration: const InputDecoration(
                       labelText: 'Cost (PHP)',
@@ -217,13 +213,14 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    enabled: !saving,
                     controller: shop,
                     decoration: const InputDecoration(
                       labelText: 'Service provider / shop (optional)',
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  const InfoBanner(
                     'Service readings are historical. Update your current odometer separately in Garage.',
                   ),
                   const SizedBox(height: 16),
@@ -236,6 +233,7 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
               icon: Icons.notes_outlined,
               children: [
                 TextFormField(
+                  enabled: !saving,
                   controller: notes,
                   decoration: const InputDecoration(
                     labelText: 'Notes (optional)',
@@ -253,7 +251,7 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
                           : 'Scheduled notifications are available in the Android app.',
                     ),
                     value: remindersSupported && reminder,
-                    onChanged: remindersSupported
+                    onChanged: remindersSupported && !saving
                         ? (v) => setState(() => reminder = v)
                         : null,
                   ),
@@ -262,7 +260,7 @@ class _AddMaintenanceScreenState extends State<AddMaintenanceScreen> {
             ),
             FilledButton.icon(
               onPressed: saving ? null : save,
-              icon: const Icon(Icons.check),
+              icon: BusyIcon(busy: saving),
               label: Text(
                 saving
                     ? 'Saving...'

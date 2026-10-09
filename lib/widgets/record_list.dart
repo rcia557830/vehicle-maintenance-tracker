@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'maintenance_card.dart';
+
 import '../models/maintenance_record.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
@@ -38,7 +40,8 @@ class RecordList extends StatelessWidget {
         return Column(
           children: [
             if (table)
-              Padding(
+              Container(
+                color: AppColors.field,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 22,
                   vertical: 16,
@@ -107,23 +110,10 @@ class RecordList extends StatelessWidget {
                   ),
                 )
               else
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
-                  leading: const IconBadge(Icons.build_outlined, size: 36),
-                  title: Text(
-                    records[i].type,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  subtitle: Text(
-                    '${dateLabel(records[i].date)}\n${money(records[i].cost)} \u00b7 ${distance(records[i].odometer, unit)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  isThreeLine: true,
-                  trailing: const Icon(Icons.chevron_right, size: 18),
-                  onTap: () => onOpen(records[i].id!),
+                MaintenanceCard(
+                  record: records[i],
+                  unit: unit,
+                  onOpen: () => onOpen(records[i].id!),
                 ),
             ],
           ],

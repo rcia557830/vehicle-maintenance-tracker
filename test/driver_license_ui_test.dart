@@ -67,7 +67,13 @@ void main() {
           await tester.ensureVisible(target);
           await tester.pumpAndSettle();
           await tester.tap(target);
-          await tester.pumpAndSettle();
+          // Database work runs outside the test clock. Let finishSave wait for
+          // persistence before settling the animated saving indicator.
+          if (text == 'Save license' || text == 'Delete') {
+            await tester.pump();
+          } else {
+            await tester.pumpAndSettle();
+          }
         }
 
         Future<void> finishSave() async {

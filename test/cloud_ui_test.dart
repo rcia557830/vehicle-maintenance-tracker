@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vehicle_maintenance_tracker/cloud_app.dart';
+import 'package:vehicle_maintenance_tracker/screens/auth_screen.dart';
+import 'package:vehicle_maintenance_tracker/theme/app_theme.dart';
 
 import 'ui_capture.dart';
 
@@ -13,6 +15,47 @@ import 'package:vehicle_maintenance_tracker/screens/settings_screen.dart';
 
 void main() {
   setUpAll(loadCaptureFonts);
+  testWidgets(
+    'login and registration fit short desktop and enlarged phone text',
+    (tester) async {
+      late final SupabaseClient client;
+      await tester.runAsync(() async {
+        client = SupabaseClient(
+          'https://test.supabase.co',
+          'public-key',
+          authOptions: const AuthClientOptions(autoRefreshToken: false),
+        );
+      });
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.runAsync(client.dispose);
+      });
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      for (final size in [const Size(1024, 500), const Size(320, 700)]) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildAppTheme(),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.3)),
+              child: child!,
+            ),
+            home: AuthScreen(key: ValueKey(size), client: client),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final toggle = find.text('New to Motorcare? Create an account');
+        await tester.ensureVisible(toggle);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        expect(find.text('Start your garage'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+    },
+  );
   testWidgets('missing configuration shows a useful setup screen', (
     tester,
   ) async {
