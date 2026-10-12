@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,13 +27,79 @@ class _AuthScreenState extends State<AuthScreen> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool signup = false, busy = false, obscure = true;
+  StreamSubscription<AuthState>? authSubscription;
+  bool googleBusy = false;
   String? message;
   bool failed = false;
   String get redirect =>
       kIsWeb ? '${Uri.base.origin}/' : 'io.motorcare.app://login-callback/';
 
   @override
+  void initState() {
+    super.initState();
+    authSubscription = widget.client.auth.onAuthStateChange.listen(
+      (_) {},
+      onError: (Object error) {
+        if (!mounted) return;
+        setState(() {
+          failed = true;
+          message = 'Sign-in could not be completed. Please try again.';
+        });
+      },
+    );
+  }
+
+  Future<void> signInWithGoogle() async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      googleBusy = true;
+      failed = false;
+      message = null;
+    });
+    try {
+      final opened = await widget.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: redirect,
+        authScreenLaunchMode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+        queryParams: const {'prompt': 'select_account'},
+      );
+      if (!mounted) return;
+      setState(() {
+        failed = !opened;
+        message = opened
+            ? 'Finish signing in with Google in your browser. If you cancelled, you can try again.'
+            : 'Unable to open Google sign-in. Please try again.';
+      });
+      // Opening the browser is not a successful login. CloudApp only opens
+      // the garage after Supabase delivers an authenticated session.
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        failed = true;
+        message = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        failed = true;
+        message = 'Unable to start Google sign-in. Check your connection and try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          busy = false;
+          googleBusy = false;
+        });
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    authSubscription?.cancel();
     email.dispose();
     password.dispose();
     super.dispose();
@@ -196,6 +264,46 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             const SizedBox(height: 32),
                             if (!widget.recovery) ...[
+                              OutlinedButton.icon(
+                                key: const ValueKey('google-sign-in'),
+                                onPressed: busy ? null : signInWithGoogle,
+                                icon: googleBusy
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          semanticsLabel:
+                                              'Opening Google sign-in',
+                                        ),
+                                      )
+                                    : const Icon(Icons.login, size: 20),
+                                label: Text(
+                                  googleBusy
+                                      ? 'Opening Google...'
+                                      : 'Continue with Google',
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              const Row(
+                                children: [
+                                  Expanded(child: Divider()),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                    child: Text(
+                                      'or use email',
+                                      style: TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(child: Divider()),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
                               TextFormField(
                                 controller: email,
                                 enabled: !busy,
@@ -263,15 +371,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                   message!,
                                   color: failed
                                       ? AppColors.danger
-                                      : AppColors.success,
+                                      : AppColors.info,
                                   icon: failed
                                       ? Icons.error_outline
-                                      : Icons.check_circle_outline,
+                                      : Icons.info_outline,
                                 ),
                               ),
                             FilledButton(
                               onPressed: busy ? null : submit,
-                              child: busy
+                              child: busy && !googleBusy
                                   ? const SizedBox(
                                       height: 20,
                                       width: 20,

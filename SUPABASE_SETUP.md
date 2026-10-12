@@ -102,3 +102,37 @@ node scripts/test_supabase.mjs
 ```
 
 These checks use local Auth stubs and two user roles. A live Supabase project, real email delivery, and Android deep links/reminder delivery still need a smoke test after you supply project configuration. No cloud database is provisioned or connected by the code alone. Builds made without configuration intentionally show the setup screen.
+
+
+## Google sign-in (SSO)
+
+Motorcare's **Continue with Google** button uses Supabase browser OAuth on Android and Chrome. Email/password sign-in remains available. The SDK handles the callback/session, and the existing authenticated workspace opens only after a valid session arrives. No database migration or Google client secret belongs in the Flutter app.
+
+### One-time Google Cloud setup
+
+1. Open https://console.cloud.google.com/ and create or select your Motorcare project.
+2. Open **Google Auth Platform**. Complete **Branding** with Motorcare as the app name and your support/contact email. Choose an **External** audience if you are using personal Google accounts. While the app is in testing, add the Google accounts you will use under **Audience > Test users**.
+3. Under **Clients**, create an OAuth client with application type **Web application**. This is intentional: Supabase receives Google's callback even when Motorcare runs on Android.
+4. Add `http://localhost:8080` under **Authorized JavaScript origins** for the Chrome development app.
+5. Add this exact **Authorized redirect URI**:
+   `https://gogoiianobqtnpbsjxqq.supabase.co/auth/v1/callback`
+6. Create the client and copy its Client ID and Client Secret directly into Supabase in the next step. Keep the secret out of source control, config/supabase.json and chat.
+
+### Enable Google in Supabase
+
+1. Open your project > **Authentication > Sign In / Providers > Google** (the section may be called Providers).
+2. Enable Google, enter the Google Web Client ID and Client Secret, and save. Keep nonce validation enabled.
+3. Under **Authentication > URL Configuration**, keep the Site URL `http://localhost:8080` and allow both:
+   - `http://localhost:8080/`
+   - `io.motorcare.app://login-callback/`
+4. For hosting, also allow your actual HTTPS app URL and update the Site URL appropriately.
+
+### Run and verify
+
+Run Chrome using `flutter run -d chrome --web-port=8080 --dart-define-from-file=config/supabase.json`, or Android using `flutter run -d YOUR_DEVICE_ID --dart-define-from-file=config/supabase.json`.
+
+Tap **Continue with Google**, choose an allowed Google account and complete consent. Android opens the browser and returns through the existing app link; Chrome returns to the same origin. Check that the garage opens, sign out, and sign in again to confirm the session flow. Cancelling in the browser leaves the login available to retry. Use your existing account email when you want Supabase's supported identity linking behavior; a different account has its own private garage.
+
+If Google reports `redirect_uri_mismatch`, compare the Google redirect URI with the Supabase `/auth/v1/callback` URL above. If Supabase reports the provider is disabled, enable Google and save the credentials. If Android lands on localhost instead of returning to Motorcare, check the mobile URL in Supabase's redirect allow list. A successful browser launch alone does not prove authentication succeeded.
+
+Reference: https://supabase.com/docs/guides/auth/social-login/auth-google and https://supabase.com/docs/reference/dart/auth-signinwithoauth
